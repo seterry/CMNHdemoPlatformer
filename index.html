@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="UTF-8" />
-        <title>Save our Planet</title>
+        <title>CMNH Platformer Demo</title>
         <style type="text/css">
             body{
                 margin: 0;
@@ -10,7 +10,7 @@
             }
         </style>
         <script type="text/javascript">
-            var TheGame = {};
+            var GameStates = {};
             </script>
         <script src="phaser.min.js"></script>
         <script src="gyro.min.js"></script>
@@ -18,262 +18,249 @@
     <body>
         <script type="text/javascript">
 
-    TheGame.LoadState = function(game) {
-        this.music;
-    };
+GameStates.LoadState = function(game) {
+};
 
-    TheGame.LoadState.prototype = {
-        preload: function () {
-            this.load.audio('music', '/assets/gamemusic.mp3');
-        },
+GameStates.LoadState.prototype = {
+	preload: function () {
+		this.load.audio('music', '/assets/gamemusic.mp3');
+	},
 
-        create: function () {
-            this.music = this.add.audio('music');
-            this.music.loop = true;
-            this.music.play();
-        },
+	create: function () {
+		this.music = this.add.audio('music');
+		this.music.loop = true;
+		this.music.play();
+	},
 
-        render: function () {
-            this.game.state.start('Intro');
-        }
+	render: function () {
+		this.game.state.start('Intro');
+	}
 
-    };
+};
 
-    TheGame.IntroState = function(game) {
-    };
+GameStates.IntroState = function(game) {
+};
 
-    TheGame.IntroState.prototype = {
-        create: function () {
-            t = this.add.text(0, this.game.height / 2, "Press Any Key to Start", {
-                font: "55px Arial",
-                fill: "#00ff14",
-                boundsAlignH: "center",
-                align: "center"
-            });
-            t.setTextBounds(16, 16, this.game.width, this.game.height);
-            t.anchor.set(0.0, 0.5);
+GameStates.IntroState.prototype = {
+	create: function () {
+		var t = this.add.text(0, this.game.height / 2, "Press Any Key to Start", {
+			font: "55px Arial",
+			fill: "#00ff14",
+			boundsAlignH: "center",
+			align: "center"
+		});
+		t.setTextBounds(16, 16, this.game.width, this.game.height);
+		t.anchor.set(0.0, 0.5);
 
-            this.game.input.keyboard.onDownCallback = function (e) {
-                this.game.state.start('Play');
-            };
-        }
-    };
+		this.game.input.keyboard.onDownCallback = function (e) {
+			this.game.state.start('Play');
+		};
+	}
+};
 
-            
-	TheGame.PlayState = function(game) {
-		this.cursors;
-		this.levels;
-		this.bricks;
-		this.dude;
-		this.facing;
-		this.jumpButton;
-		this.jumpTimer;
-		this.coins;
-		this.scoretext;
-		this.score;
-		this.sfx;
-		this.emitters;
-		this.current_emitter;
-		this.max_emitters;
+		
+GameStates.PlayState = function(game) {
+};
+
+GameStates.PlayState.prototype = {
+	preload: function () {
+		this.lastBrickTime = 0;
+		
+		this.load.image('sky', 'assets/largesky.jpg');
+		this.load.image('brick', 'assets/brickblock.png');
+		this.load.image('question', 'assets/questionblock.png');
+		this.load.image('star', 'assets/star.png');
+		this.load.spritesheet('dude', 'assets/dude.png', 32, 48);
+		this.load.spritesheet('coin', 'assets/spincoin.png', 64, 64);
+		
+		this.load.audio('sfx', 'assets/coin.mp3');
+	},
+		  
+	create: function () {
+
+		this.game.add.tileSprite(0, 0, this.game.width*2, this.game.height, 'sky');
 	
-	};
 	
-	TheGame.PlayState.prototype = {
-		preload: function () {
-			this.load.image('sky', 'assets/largesky.jpg');
-			this.load.image('brick', 'assets/brickblock.png');
-			this.load.image('question', 'assets/questionblock.png');
-			this.load.image('star', 'assets/star.png');
-			this.load.spritesheet('dude', 'assets/dude.png', 32, 48);
-			this.load.spritesheet('coin', 'assets/spincoin.png', 64, 64);
-			
-			this.load.audio('sfx', 'assets/coin.mp3');
-		},
-			  
-		create: function () {
-
-    		this.game.add.tileSprite(0, 0, this.game.width*2, this.game.height, 'sky');
-		
-		
-            this.game.input.keyboard.onDownCallback = null;
-		
-			this.score = 0;
-			this.scoretext = this.add.text(0, 20, "Score: 0", {
-							  font: "55px Arial",
-							  fill: "#00ff14",
-							  align: "left"
-							  });
-			this.scoretext.setTextBounds(16, 16, this.game.width, this.game.height);
-			this.scoretext.anchor.set(0.0, 0.5);
-			this.scoretext.fixedToCamera = true;
-					
-			this.world.setBounds(0, 0, this.game.width*2, this.game.height);
-			this.physics.startSystem(Phaser.Physics.ARCADE);
-			this.time.desiredFps = 30;
-			this.physics.arcade.gravity.y = 250;
-			
-			this.sfx = this.add.audio('sfx');
-			this.sfx.allowMultiple = true;
-			this.sfx.addMarker('zap', 0, 0.5);
-
-			this.jumpTimer = 0;
-			
-			this.dude = this.add.sprite(32, 48, 'dude');
-			this.physics.enable(this.dude, Phaser.Physics.ARCADE);
-			this.dude.body.bounce.y = 0.2;
-			this.dude.body.collideWorldBounds = true;
-			this.dude.body.setSize(20, 32, 5, 16);
-			this.dude.animations.add('left', [0, 1, 2, 3], 10, true);
-			this.dude.animations.add('turn', [4], 20, true);
-			this.dude.animations.add('right', [5, 6, 7, 8], 10, true);
-			this.camera.follow(this.dude, Phaser.Camera.FOLLOW_PLATFORMER);
-		
-		
-			this.bricks = this.add.physicsGroup();
-			this.coins = this.add.physicsGroup();
-			
-			this.levels = ["             C      C  ",
-						   " C             C C    C",
-						   " C   ??B   BB?B? ?BB CB?  ",
-						   "      BB? C    C BB?B?B?? ",
-						   "  BBB       BBB      BBB  ",
-						   "BBB????B?? B?B???B?B?????B"];
-
-			this.cursors = this.input.keyboard.createCursorKeys();
-			this.jumpButton = this.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-					   
-			y = this.game.height;
-			for ( var level = this.levels.length - 1; level >= 0; level-- ) {
-				x = 0;
-				for ( var i = 0; i < this.levels[level].length; i++ ) {
-					c = this.levels[level].charAt(i);
-					brick = null;
-					coin = null;
-					if (c=='B') {
-						brick = this.add.sprite(x, y, 'brick');
-					} else if (c=='?') {
-						brick = this.add.sprite(x, y, 'question');
-					} else if (c=='C') {
-						coin = this.add.sprite(x, y, 'coin');
-						coin.animations.add('spin');
-						coin.animations.play('spin', 10, true);
-					}
-					if (brick != null) {
-						brick.y = brick.y - brick.height;
-						this.physics.enable(brick, Phaser.Physics.ARCADE);
-						brick.body.allowGravity = false;
-						brick.body.immovable = true;
-						this.bricks.add(brick);
-					}
-					if (coin != null) {
-						coin.anchor.set(0.5, 0.5);
-						coin.x = coin.x + coin.width/2;
-						coin.y = coin.y - coin.height/2;
-						this.physics.enable(coin, Phaser.Physics.ARCADE);
-						coin.body.allowGravity = false;
-						coin.body.immovable = true;
-						this.coins.add(coin);
-					}	
-					x = x + 100;
-
-				}
-				y = y - 100
-			}
-			
-			this.max_emitters = 3;
-			this.current_emitter = 0;
-			this.emitters = []
-			
-			for (var i=0; i<this.max_emitters; i++) {                
-				emitter = this.add.emitter(0, 0, 20);
-				emitter.makeParticles('star');
-				emitter.gravity = -200;
-				this.emitters.push(emitter);
-			}       
+		this.game.input.keyboard.onDownCallback = null;
+	
+		this.score = 0;
+		this.scoretext = this.add.text(0, 20, "Score: 0", {
+						  font: "55px Arial",
+						  fill: "#00ff14",
+						  align: "left"
+						  });
+		this.scoretext.setTextBounds(16, 16, this.game.width, this.game.height);
+		this.scoretext.anchor.set(0.0, 0.5);
+		this.scoretext.fixedToCamera = true;
 				
-		},
+		this.world.setBounds(0, 0, this.game.width*2, this.game.height);
+		this.physics.startSystem(Phaser.Physics.ARCADE);
+		this.time.desiredFps = 30;
+		this.physics.arcade.gravity.y = 250;
 		
-		processHandlerBricks: function(dude, brick) {
-			return true;
-		},
-		
-		collisionHandlerBricks: function(dude, brick) {
-		},
-		
-		processHandlerCoins: function(dude, coin) {
-			return true;
-		},
-		
-		collisionHandlerCoins: function(dude, coin) {            	
-			emitter = this.emitters[this.current_emitter];
-			this.current_emitter = (this.current_emitter + 1) % this.max_emitters;
-			emitter.x = coin.x;
-			emitter.y = coin.y; 
-			emitter.start(true, 2000, null, 20);
+		this.sfx = this.add.audio('sfx');
+		this.sfx.allowMultiple = true;
+		this.sfx.addMarker('zap', 0, 0.5);
 
-			coin.kill();
-			this.sfx.play('zap');
-			this.score = this.score + 1;
-			this.scoretext.text = "Score: " + this.score;
-		},
+		this.jumpTimer = 0;
 		
-		update: function() {
+		this.dude = this.add.sprite(32, 48, 'dude');
+		this.physics.enable(this.dude, Phaser.Physics.ARCADE);
+		this.dude.body.bounce.y = 0.2;
+		this.dude.body.collideWorldBounds = true;
+		this.dude.body.setSize(20, 32, 5, 16);
+		this.dude.animations.add('left', [0, 1, 2, 3], 10, true);
+		this.dude.animations.add('turn', [4], 20, true);
+		this.dude.animations.add('right', [5, 6, 7, 8], 10, true);
+		this.camera.follow(this.dude, Phaser.Camera.FOLLOW_PLATFORMER);
+	
+	
+		this.bricks = this.add.physicsGroup();
+		this.coins = this.add.physicsGroup();
 		
-			if (this.physics.arcade.collide(this.dude, this.bricks, this.collisionHandlerBricks, this.processHandlerBricks, this)) {
-			}
-			
-			if (this.physics.arcade.collide(this.dude, this.coins, this.collisionHandlerCoins, this.processHandlerCoins, this)) {
-			}
+		this.levels = ["             C      C  ",
+					   " C             C C    C",
+					   " C   ??B   BB?B? ?BB CB?  ",
+					   "      BB? C    C BB?B?B?? ",
+					   "  BBB       BBB      BBB  ",
+					   "BBB????B?? B?B???B?B?????B"];
 
-			this.dude.body.velocity.x = 0;
-
-			if (this.cursors.left.isDown) {
-				this.dude.body.velocity.x = -150;
-
-				if (this.facing != 'left') {
-					this.dude.animations.play('left');
-					this.facing = 'left';
+		this.cursors = this.input.keyboard.createCursorKeys();
+		this.jumpButton = this.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+				   
+		var y = this.game.height;
+		for ( var level = this.levels.length - 1; level >= 0; level-- ) {
+			var x = 0;
+			for ( var i = 0; i < this.levels[level].length; i++ ) {
+				c = this.levels[level].charAt(i);
+				brick = null;
+				coin = null;
+				if (c=='B') {
+					brick = this.add.sprite(x, y, 'brick');
+				} else if (c=='?') {
+					brick = this.add.sprite(x, y, 'question');
+				} else if (c=='C') {
+					coin = this.add.sprite(x, y, 'coin');
+					coin.animations.add('spin');
+					coin.animations.play('spin', 10, true);
 				}
-			} else if (this.cursors.right.isDown) {
-				this.dude.body.velocity.x = 150;
-
-				if (this.facing != 'right') {
-					this.dude.animations.play('right');
-					this.facing = 'right';
+				if (brick != null) {
+					brick.y = brick.y - brick.height;
+					this.physics.enable(brick, Phaser.Physics.ARCADE);
+					brick.body.allowGravity = false;
+					brick.body.immovable = true;
+					this.bricks.add(brick);
 				}
-			} else {
-				if (this.facing != 'idle'){
-					this.dude.animations.stop();
+				if (coin != null) {
+					coin.anchor.set(0.5, 0.5);
+					coin.x = coin.x + coin.width/2;
+					coin.y = coin.y - coin.height/2;
+					this.physics.enable(coin, Phaser.Physics.ARCADE);
+					coin.body.allowGravity = false;
+					coin.body.immovable = true;
+					this.coins.add(coin);
+				}	
+				x = x + 100;
 
-					if (this.facing == 'left') {
-						this.dude.frame = 0;
-					} else {
-						this.dude.frame = 5;
-					}
-
-					this.facing = 'idle';
-				}
 			}
-
-			if (this.jumpButton.isDown && this.time.now > this.jumpTimer) {
-				this.dude.body.velocity.y = -250;
-				this.jumpTimer = this.time.now + 750;
-			}
-
+			y = y - 100
 		}
 		
+		this.max_emitters = 3;
+		this.current_emitter = 0;
+		this.emitters = []
 		
-	};
-        
-        window.onload = function() {
-            var game = new Phaser.Game("100", "100", Phaser.AUTO);
-            
-            game.state.add('Load', TheGame.LoadState);
-        	game.state.add('Intro', TheGame.IntroState);
-            game.state.add('Play', TheGame.PlayState);
-            
-            game.state.start('Load');
-        };
+		for (var i=0; i<this.max_emitters; i++) {                
+			emitter = this.add.emitter(0, 0, 20);
+			emitter.makeParticles('star');
+			emitter.gravity = -200;
+			this.emitters.push(emitter);
+		}       
+			
+	},
+	
+	processHandlerBricks: function(dude, brick) {
+		return true;
+	},
+	
+	collisionHandlerBricks: function(dude, brick) {
+		this.lastBrickTime = this.time.now;
+	},
+	
+	processHandlerCoins: function(dude, coin) {
+		return true;
+	},
+	
+	collisionHandlerCoins: function(dude, coin) {            	
+		var emitter = this.emitters[this.current_emitter];
+		this.current_emitter = (this.current_emitter + 1) % this.max_emitters;
+		emitter.x = coin.x;
+		emitter.y = coin.y; 
+		emitter.start(true, 2000, null, 20);
+
+		coin.kill();
+		this.sfx.play('zap');
+		this.score = this.score + 1;
+		this.scoretext.text = "Score: " + this.score;
+	},
+	
+	update: function() {
+	
+		if (this.physics.arcade.collide(this.dude, this.bricks, this.collisionHandlerBricks, this.processHandlerBricks, this)) {
+		}
+		
+		if (this.physics.arcade.collide(this.dude, this.coins, this.collisionHandlerCoins, this.processHandlerCoins, this)) {
+		}
+
+		this.dude.body.velocity.x = 0;
+
+		if (this.cursors.left.isDown) {
+			this.dude.body.velocity.x = -150;
+
+			if (this.facing != 'left') {
+				this.dude.animations.play('left');
+				this.facing = 'left';
+			}
+		} else if (this.cursors.right.isDown) {
+			this.dude.body.velocity.x = 150;
+
+			if (this.facing != 'right') {
+				this.dude.animations.play('right');
+				this.facing = 'right';
+			}
+		} else {
+			if (this.facing != 'idle'){
+				this.dude.animations.stop();
+
+				if (this.facing == 'left') {
+					this.dude.frame = 0;
+				} else {
+					this.dude.frame = 5;
+				}
+
+				this.facing = 'idle';
+			}
+		}
+
+		if (this.jumpButton.isDown &&  this.time.now < this.lastBrickTime+750 && this.time.now > this.jumpTimer) {
+			this.dude.body.velocity.y = -250;
+			this.jumpTimer = this.time.now + 750;
+		}
+
+	}
+	
+	
+};
+	
+window.onload = function() {
+	TheGame = new Phaser.Game("100", "100", Phaser.AUTO);
+	
+	TheGame.state.add('Load', GameStates.LoadState);
+	TheGame.state.add('Intro', GameStates.IntroState);
+	TheGame.state.add('Play', GameStates.PlayState);
+	
+	TheGame.state.start('Load');
+};
         
         
         </script>
