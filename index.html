@@ -23,7 +23,7 @@ GameStates.LoadState = function(game) {
 
 GameStates.LoadState.prototype = {
 	preload: function () {
-		this.load.audio('music', '/assets/gamemusic.mp3');
+		this.load.audio('music', 'assets/gamemusic.mp3');
 	},
 
 	create: function () {
@@ -55,7 +55,13 @@ GameStates.IntroState.prototype = {
 		this.game.input.keyboard.onDownCallback = function (e) {
 			this.game.state.start('Play');
 		};
-	}
+	},
+    
+    update: function() {
+        this.input.onUp.add(function(p) {
+            this.game.state.start('Play');
+        }, this);
+    }
 };
 
 		
@@ -67,8 +73,8 @@ GameStates.PlayState.prototype = {
 		this.lastBrickTime = 0;
 		
 		this.load.image('sky', 'assets/largesky.jpg');
-		this.load.image('brick', 'assets/brickblock.png');
-		this.load.image('question', 'assets/questionblock.png');
+		this.load.image('brick', 'assets/BrickBlock.png');
+		this.load.image('question', 'assets/QuestionBlock.png');
 		this.load.image('star', 'assets/star.png');
 		this.load.spritesheet('dude', 'assets/dude.png', 32, 48);
 		this.load.spritesheet('coin', 'assets/spincoin.png', 64, 64);
@@ -258,7 +264,7 @@ window.onload = function() {
 	TheGame.state.add('Load', GameStates.LoadState);
 	TheGame.state.add('Intro', GameStates.IntroState);
 	TheGame.state.add('Play', GameStates.PlayState);
-	
+    
 	TheGame.state.start('Load');
 };
         
