@@ -43,7 +43,7 @@ GameStates.IntroState = function(game) {
 
 GameStates.IntroState.prototype = {
 	create: function () {
-		var t = this.add.text(0, this.game.height / 2, "Press Any Key to Start", {
+		var t = this.add.text(0, this.game.height / 2, "Tap to Start", {
 			font: "55px Arial",
 			fill: "#00ff14",
 			boundsAlignH: "center",
@@ -55,13 +55,11 @@ GameStates.IntroState.prototype = {
 		this.game.input.keyboard.onDownCallback = function (e) {
 			this.game.state.start('Play');
 		};
-	},
-    
-    update: function() {
+        
         this.input.onUp.add(function(p) {
             this.game.state.start('Play');
         }, this);
-    }
+	}
 };
 
 		
@@ -125,9 +123,9 @@ GameStates.PlayState.prototype = {
 		this.coins = this.add.physicsGroup();
 		
 		this.levels = ["             C      C  ",
-					   " C             C C    C",
-					   " C   ??B   BB?B? ?BB CB?  ",
-					   "      BB? C    C BB?B?B?? ",
+					   " CC    C       C C    C",
+					   " CC   ?B   BB?B? ?BB CB?  ",
+					   "     ?BB? C    C BB?B?B?? ",
 					   "  BBB       BBB      BBB  ",
 					   "BBB????B?? B?B???B?B?????B"];
 
@@ -181,7 +179,70 @@ GameStates.PlayState.prototype = {
 			emitter.makeParticles('star');
 			emitter.gravity = -200;
 			this.emitters.push(emitter);
-		}       
+		}
+        
+        gyro.frequency = 1000.0/60.0;
+        me = this;
+        switch (window.orientation) {
+            // Portrait
+            case 0:
+                gyro.startTracking(function(o) {
+                    if (o.x > 2.5) {
+                        me.goRight();
+                    } else if (o.x < -2.5) {
+                        me.goLeft();
+                    } else {
+                        me.doIdle();
+                    }
+                });
+                break;
+                               
+            case 180:
+                // Portrait (Upside-down)
+                gyro.startTracking(function(o) {
+                    if (o.x > 2.5) {
+                        me.goRight();
+                    } else if (o.x < -2.5) {
+                        me.goLeft();
+                    } else {
+                        me.doIdle();
+                    }
+                });
+                break;
+                                                  
+            case -90:
+                // Landscape (Clockwise)
+                gyro.startTracking(function(o) {
+                    if (o.y < -2.5) {
+                        me.goRight();
+                    } else if (o.y > 2.5) {
+                        me.goLeft();
+                    } else {
+                        me.doIdle();
+                    }
+                });
+                break;
+                                                                     
+            case 90:
+                // Landscape  (Counterclockwise)
+                gyro.startTracking(function(o) {
+                    if (o.y > 2.5) {
+                        me.goLeft();
+                    } else if (o.y < -2.5) {
+                        me.goRight();
+                    } else {
+                        me.doIdle();
+                    }
+                });
+                break;
+        }
+        
+        this.input.onUp.add(function(p) {
+            if (this.time.now < this.lastBrickTime+750 && this.time.now > this.jumpTimer) {
+                this.dude.body.velocity.y = -250;
+                this.jumpTimer = this.time.now + 750;
+            }
+        }, this);
 			
 	},
 	
@@ -209,7 +270,39 @@ GameStates.PlayState.prototype = {
 		this.score = this.score + 1;
 		this.scoretext.text = "Score: " + this.score;
 	},
+    
+    goLeft: function() {
+        this.dude.body.velocity.x = -150;
+        
+        if (this.facing != 'left') {
+            this.dude.animations.play('left');
+            this.facing = 'left';
+        }
+    },
 	
+    goRight: function() {
+        this.dude.body.velocity.x = 150;
+        
+        if (this.facing != 'right') {
+            this.dude.animations.play('right');
+            this.facing = 'right';
+        }
+    },
+    
+    doIdle: function() {
+        if (this.facing != 'idle'){
+            this.dude.animations.stop();
+            
+            if (this.facing == 'left') {
+                this.dude.frame = 0;
+            } else {
+                this.dude.frame = 5;
+            }
+            
+            this.facing = 'idle';
+        }        
+    },
+    
 	update: function() {
 	
 		if (this.physics.arcade.collide(this.dude, this.bricks, this.collisionHandlerBricks, this.processHandlerBricks, this)) {
@@ -221,31 +314,11 @@ GameStates.PlayState.prototype = {
 		this.dude.body.velocity.x = 0;
 
 		if (this.cursors.left.isDown) {
-			this.dude.body.velocity.x = -150;
-
-			if (this.facing != 'left') {
-				this.dude.animations.play('left');
-				this.facing = 'left';
-			}
+            this.goLeft();
 		} else if (this.cursors.right.isDown) {
-			this.dude.body.velocity.x = 150;
-
-			if (this.facing != 'right') {
-				this.dude.animations.play('right');
-				this.facing = 'right';
-			}
+            this.goRight();
 		} else {
-			if (this.facing != 'idle'){
-				this.dude.animations.stop();
-
-				if (this.facing == 'left') {
-					this.dude.frame = 0;
-				} else {
-					this.dude.frame = 5;
-				}
-
-				this.facing = 'idle';
-			}
+            this.doIdle();
 		}
 
 		if (this.jumpButton.isDown &&  this.time.now < this.lastBrickTime+750 && this.time.now > this.jumpTimer) {
